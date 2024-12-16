@@ -8,9 +8,9 @@ const ReplyModel = require("../models").Reply;
 module.exports = function (app) {
   //This defines a POST route for creating a thread. //
   app.route('/api/threads/:board').post((req, res) => {
-    const { text, delete_password } = req.body;
-      let board = req.body.board;
-      if(!board) {
+    const { text, delete_password } = req.body; //Extracts the text and delete_password values from the request body.//
+      let board = req.body.board; //it tries to get the board name from req.body.board.
+      if(!board) { //If the board name is not provided in the body, it falls back to using the URL parameter.//
         board = req.params.board;
       }
     console.log("post", req.body);
