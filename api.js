@@ -4,6 +4,9 @@ const BoardModel = require("../models").Board;
 const ThreadModel = require("../models").Thread;
 const ReplyModel = require("../models").Reply;
 
+/*When a POST request is made to /api/threads/:board, the backend creates a new thread with the provided text and delete_password.
+If the board with the given name doesn’t exist, it creates a new board and saves the thread under it. If the board already exists, the thread is added to the existing board.
+The route for replies to threads is defined but not yet implemented.*/
 
 module.exports = function (app) {
   //This defines a POST route for creating a thread. //
