@@ -6,7 +6,7 @@ const ReplyModel = require("../models").Reply;
 
 
 module.exports = function (app) {
-  
+  //This defines a POST route for creating a thread. //
   app.route('/api/threads/:board').post((req, res) => {
     const { text, delete_password } = req.body;
       let board = req.body.board;
