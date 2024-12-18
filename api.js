@@ -1,15 +1,12 @@
-
-'use strict';
+"use strict";
 
 const BoardModel = require("../models").Board;
 const ThreadModel = require("../models").Thread;
 const ReplyModel = require("../models").Reply;
 
 module.exports = function (app) {
-
-  app.route('/api/threads/:board').post(async (req, res) => {
+  app.route("/api/threads/:board").post(async (req, res) => {
     try {
-      
       const { text, delete_password } = req.body;
       let board = req.body.board;
       if (!board) {
@@ -46,7 +43,7 @@ module.exports = function (app) {
     }
   });
 
-  app.route('/api/threads/:board').get(async (req, res) => {
+  app.route("/api/threads/:board").get(async (req, res) => {
     try {
       const board = req.params.board; // Fix: Use req.params
       const data = await BoardModel.findOne({ name: board }); // Fix: Use async/await
@@ -58,13 +55,7 @@ module.exports = function (app) {
 
       console.log("data", data);
       const threads = data.threads.map((thread) => {
-        const {
-          _id,
-          text,
-          created_on,
-          bumped_on,
-          replies,
-        } = thread;
+        const { _id, text, created_on, bumped_on, replies } = thread;
 
         return {
           id: _id, // Fix: Correct the reference to _id
@@ -72,19 +63,20 @@ module.exports = function (app) {
           created_on,
           bumped_on,
           replies,
-          replycount: replies.length // Count the number of replies
+          replycount: replies.length, // Count the number of replies
         };
       });
 
       res.json(threads);
     } catch (err) {
       console.error(err);
-      res.status(500).json({ error: "There was an error processing your request" });
+      res
+        .status(500)
+        .json({ error: "There was an error processing your request" });
     }
   });
 
- 
-  app.route('/api/threads/:board').put(async (req, res) => {
+  app.route("/api/threads/:board").put(async (req, res) => {
     try {
       console.log("put", req.body);
       const { report_id } = req.body;
@@ -102,59 +94,64 @@ module.exports = function (app) {
       // Locate the thread to report
       let reportedThread = boardData.threads.id(report_id);
       if (!reportedThread) {
-        return res.json({ error: "Thread not found" });
+        res.status(200).send("Success");
       }
-
+    
       // Update the thread fields
       reportedThread.reported = true;
       reportedThread.bumped_on = date;
+    
+      // Save the updated board
+      await boardData.save();
+      return res.send("Success"); //.json format did not work ([object, Object] issue persisted)//
+    } catch (err) {
+      console.error(err);
+      res.json({
+        error: err.message || "There was an error processing your request",
+      });
+    }
+  });
+
+  app.route("/api/threads/:board").delete(async (req, res) => {
+    try {
+      console.log("delete", req.body);
+      const { thread_id, delete_password } = req.body; // Fix closing bracket
+      const board = req.params.board;
+
+      // Find the board asynchronously
+      const boardData = await BoardModel.findOne({ name: board });
+
+      if (!boardData) {
+        return res.json({ error: "Board not found" }); // Fixed response format
+      }
+
+      // Locate the thread to delete
+      const threadToDelete = boardData.threads.id(thread_id);
+      if (!threadToDelete) {
+        return res.json({ error: "Thread not found" });
+      }
+
+      // Check the delete password
+      if (threadToDelete.delete_password !== delete_password) {
+        return res.send("Incorrect Password");
+      }
+
+      // Remove the thread
+      threadToDelete.remove();
 
       // Save the updated board
       await boardData.save();
       res.send("Success");
     } catch (err) {
       console.error(err);
-      res.status(500).json({ error: "There was an error processing your request" });
+      res
+        .status(500)
+        .json({ error: "There was an error processing your request" });
     }
   });
-
-  app.route('/api/threads/:board').delete(async (req, res) => {
-  try {
-    console.log("delete", req.body);
-    const { thread_id, delete_password } = req.body; // Fix closing bracket
-    const board = req.params.board;
-
-    // Find the board asynchronously
-    const boardData = await BoardModel.findOne({ name: board });
-
-    if (!boardData) {
-      return res.json({ error: "Board not found" }); // Fixed response format
-    }
-
-    // Locate the thread to delete
-    const threadToDelete = boardData.threads.id(thread_id);
-    if (!threadToDelete) {
-      return res.json({ error: "Thread not found" });
-    }
-
-    // Check the delete password
-    if (threadToDelete.delete_password !== delete_password) {
-      return res.send("Incorrect Password");
-    }
-
-    // Remove the thread
-    threadToDelete.remove();
-
-    // Save the updated board
-    await boardData.save();
-    res.send("Success");
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "There was an error processing your request" });
-  }
-});
-  app.route('/api/replies/:board');
+  app.route("/api/replies/:board");
 };
+
 
 //This code block below is the old style code somewhat outdated to the newest version of mongoose//
 /*Example Workflow:
